@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+        <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="js/jquery.qrcode.min.js"></script>
+        <link href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css"
+        rel="stylesheet" type="text/css">
+        <link href="http://pingendo.github.io/pingendo-bootstrap/themes/default/bootstrap.css"
+        rel="stylesheet" type="text/css">
+    </head>
+    
+    <body>
+        <div class="section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h1 class="text-center">Bitcoin QR Code Generator</h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 col-md-offset-3">
+                        <form class="form-horizontal text-center" role="form">
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                            <i class="fa fa-tags"></i>
+                                        </span>
+                                        <input type="text" placeholder="Label" id="label" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                            <i class="fa fa-bitcoin"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="btc" placeholder="Bitcoin address">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <div class="input-group">
+                                        <span class="input-group-addon">
+                                            <i class="fa fa-dollar"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="amount" placeholder="Amount">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-12">
+                                    <button type="button" class="btn btn-primary" id="generate">
+                                        <i class="fa fa-fw fa-qrcode"></i>Generate QR code</button>
+                                    <button class="btn btn-default" id="clear">Clear
+                                        <i class="fa fa-fw fa-times-circle-o"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-10 col-md-offset-1" id="msg">
+                        
+                    </div>
+                </div>                
+                <div class="row">
+                    <div class="col-md-4 text-center" id="qr1">
+                        
+                    </div>
+                    <div class="col-md-4 text-center" id="qr2">
+                        
+                    </div>
+                    <div class="col-md-4 text-center" id="qr3">
+                        
+                    </div>                    
+                </div>
+            </div>
+        </div>
+        <script>
+            $(document).ready(function() {
+                $('#clear').click(function() {
+                    clear();
+                });
+                
+                $('#generate').click(function() {
+                    $('#qr1').html('<div id="qrcode1" class="img-responsive"></div>');
+                    $('#qr2').html('<div id="qrcode2" class="img-responsive"></div>');
+                    $('#qr3').html('<div id="qrcode3" class="img-responsive"></div>');
+                    
+                    var uri = "bitcoin:" + $('#btc').val() + "?amount="+ $('#amount').val();
+                    
+                    if($('#label').val() !== "") {
+                        uri += "&message=" + $('#label').val();
+                    }
+                    if(validate_address($('#btc').val())) {
+                        mAlert(uri, 'success');
+                        jQuery('#qrcode1').qrcode({width: 256,height: 256,text: uri});
+                        jQuery('#qrcode2').qrcode({width: 128,height: 128,text: uri});
+                        jQuery('#qrcode3').qrcode({width: 64,height: 64,text: uri});
+                    } else {
+                        mAlert('Wrong bitcoin address', 'danger');
+                    }
+                });
+                
+                function mAlert(msg, type) {
+                    $('#msg').html('<div class="alert alert-' + type + ' alert-dismissible" role="alert">'
+                            + '<button type="button" class="close" data-dismiss="alert" aria-label="Close">'
+                            + '<span aria-hidden="true">&times;</span></button>' + msg + '</div>');
+                }
+                
+                function clear() {
+                    $('#label').val("");
+                    $('#btc').val("");
+                    $('#amount').val("");
+                    $('#qr1').html("");
+                    $('#qr2').html("");
+                    $('#qr3').html("");
+                    $('#msg').html("");
+                }
+                
+                function validate_address(address) {
+                    var result = false;
+
+                    if(address.length>34 || address.length<27)  /* not valid string length */
+                        return result;
+
+                    if(/[0OIl]/.test(address))   /* this character are invalid in base58 encoding */
+                        return result;
+
+                    $.ajax({
+                        url : "https://blockchain.info/q/addressbalance/" + address,   /* return balance in satoshi */
+                        async : false
+                    }).done(function(data) {
+                        var isnum = /^\d+$/.test(data);   
+                        if (isnum) {                         /* if the returned data are all digits, it's valid */  
+                            console.log("data is integer");
+                            result = true;
+                        }
+                    });
+                    return result;
+                }
+            });
+        </script>
+    </body>
+
+</html>
